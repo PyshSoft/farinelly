@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"log"
 	"os"
 	"os/signal"
 
@@ -16,6 +17,7 @@ func StartPolling() {
 	defer cancel()
 
 	opts := []bot.Option{
+		bot.WithMiddlewares(persistLastCommand),
 		bot.WithDefaultHandler(handler),
 	}
 
@@ -25,6 +27,16 @@ func StartPolling() {
 	}
 
 	b.Start(ctx)
+}
+
+func persistLastCommand(next bot.HandlerFunc) bot.HandlerFunc {
+	return func(ctx context.Context, b *bot.Bot, update *models.Update) {
+		if update.Message != nil {
+
+			log.Printf("%d say: %s", update.Message.From.ID, update.Message.Text)
+		}
+		next(ctx, b, update)
+	}
 }
 
 func handler(ctx context.Context, b *bot.Bot, update *models.Update) {
